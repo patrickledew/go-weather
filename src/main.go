@@ -69,35 +69,49 @@ func main() {
 
 // 	}
 
-	addr := "12171 Beach Blvd, Jacksonville FL"
-	loc := geocodeAddr(addr)
-	if (len(loc) > 0) {
-
-		// Get Point
-		point, err := GetNWSPoint(loc[0].Geometry.Location.Lat, loc[0].Geometry.Location.Lng)
-
-		if (err != nil) {
-			fmt.Println("Could not get NWS point for current location")
-			os.Exit(1)
-		}
+	config := LoadConfig()
+	var loc []maps.GeocodingResult
+	for !config.GeoCodeSucceeded || config.CurrentAddress == "" {
+		config.CurrentAddress = promptForAddress()
 		
-		// Get Forecast
-		forecast, err := GetNWSForecastFromPoint(point)
-
-		if (err != nil) {
-			fmt.Println("Could not get forecast for point")
-			os.Exit(1)
+		fmt.Println("Testing address...")
+		loc = geocodeAddr(config.CurrentAddress)
+		if (len(loc) > 0) {
+			fmt.Println("Found location, saving.")
+			config.GeoCodeSucceeded = true
+			SaveConfig(config)
+			break
 		}
-
-		// Get Gridpoint
-		gridpoint, err := GetNWSWeatherDetailFromPoint(point)
-		if (err != nil) {
-			fmt.Println("Could not get raw forecast data for point")
-			os.Exit(0)
-		}
-		PrintForecast(forecast, point, gridpoint)
-		
 	}
+
+	if (len(loc) == 0) {
+		loc = geocodeAddr(config.CurrentAddress)
+	}
+
+	// Get Point
+	point, err := GetNWSPoint(loc[0].Geometry.Location.Lat, loc[0].Geometry.Location.Lng)
+
+	if (err != nil) {
+		fmt.Println("Could not get NWS point for current location")
+		os.Exit(1)
+	}
+	
+	// Get Forecast
+	forecast, err := GetNWSForecastFromPoint(point)
+
+	if (err != nil) {
+		fmt.Println("Could not get forecast for point")
+		os.Exit(1)
+	}
+
+	// Get Gridpoint
+	gridpoint, err := GetNWSWeatherDetailFromPoint(point)
+	if (err != nil) {
+		fmt.Println("Could not get raw forecast data for point")
+		os.Exit(0)
+	}
+	PrintForecast(forecast, point, gridpoint)
+	
 }
 
 func PrintForecast(f NWSForecast, l NWSPoint, g NWSWeatherDetail) {
