@@ -9,7 +9,9 @@ all: $(SOURCES) clean
 	$(CC) $(CFLAGS) $(SOURCES) 
 
 clean:
-	rm -r ./bin
+	if [ -d "$(OUT_DIR)" ]; then \
+		rm -r $(OUT_DIR); \
+	fi
 
 run: all
 	./bin/weather.exe
